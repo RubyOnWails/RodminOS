@@ -1,0 +1,29 @@
+# Rodmin OS Git Port Recipe
+# Porting Git version control system
+
+NAME="git"
+VERSION="2.43.0"
+SOURCE_URL="https://github.com/git/git"
+
+# Dependencies
+DEPENDENCIES=(
+    "zlib"
+    "openssl"
+    "curl"
+    "expat"
+)
+
+function build_git() {
+    echo "Compiling Git for Rodmin OS..."
+    # ./configure --prefix=/usr --host=x86_64-elf
+    # make -j$(nproc)
+    # make install DESTDIR=$RODMIN_BUILD/sysroot
+}
+
+function post_install_git() {
+    echo "Configuring git shell wrappers..."
+    # cp wrappers/git-rodmin $RODMIN_SDK/bin/git
+}
+
+build_git
+post_install_git

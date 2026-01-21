@@ -1,0 +1,32 @@
+# Rodmin OS Git Ignore
+
+# Build outputs
+build/
+bin/
+*.bin
+*.o
+*.a
+*.iso
+*.img
+
+# Toolchain / Temporary
+.tmp/
+*.tmp
+*.log
+
+# IDE / Project
+.vscode/
+.idea/
+.vs/
+*.suo
+*.user
+
+# Artifacts
+brain/
+walkthrough.md
+task.md
+implementation_plan.md
+
+# OS specific
+Thumbs.db
+.DS_Store

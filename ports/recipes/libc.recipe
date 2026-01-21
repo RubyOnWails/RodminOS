@@ -1,0 +1,24 @@
+# Rodmin OS Libc Recipe
+# Porting a subset of standard C library
+
+NAME="rodmin-libc"
+VERSION="0.1.0"
+SOURCE_URL="https://github.com/rodmin-os/libc-subset"
+
+# Source structure (virtual)
+SOURCE=(
+    "stdio/printf.c"
+    "string/string.c"
+    "stdlib/malloc.c"
+    "sys/syscall.c"
+)
+
+function build_libc() {
+    echo "Compiling Rodmin Libc..."
+    # for src in "${SOURCE[@]}"; do
+    #     $CC -c $src -o ${src%.c}.o
+    # done
+    # ar rcs librodmin.a *.o
+}
+
+build_libc

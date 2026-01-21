@@ -1,0 +1,25 @@
+# Rodmin OS Coreutils Recipe
+# Porting essential Unix utilities
+
+NAME="rodmin-coreutils"
+VERSION="1.0.0"
+
+UTILS=(
+    "ls"
+    "cat"
+    "echo"
+    "mkdir"
+    "rm"
+    "cp"
+    "mv"
+)
+
+function build_utils() {
+    echo "Building core utilities..."
+    for util in "${UTILS[@]}"; do
+        # $CC "src/$util.c" -o "bin/$util" -lrodmin
+        echo " - $util"
+    done
+}
+
+build_utils
