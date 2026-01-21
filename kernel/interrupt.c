@@ -1,27 +1,26 @@
-#include "interrupt.h"
 #include "kernel.h"
-#include "io.h"
+#include "process.h"
 
-static interrupt_handler_t handlers[MAX_INTERRUPTS];
-
-void interrupt_init(void) {
-    // Initialize IDT and PIC remapping logic here
-    // This is a placeholder for the actual IDT setup
-    for(int i = 0; i < MAX_INTERRUPTS; i++) {
-        handlers[i] = NULL;
+// Central Interrupt Dispatcher
+void handle_interrupt(interrupt_frame_t* frame) {
+    uint64_t int_no = frame->int_no;
+    
+    switch (int_no) {
+        case 32: // Timer Interrupt (IRQ 0)
+            timer_handler(frame);
+            break;
+        case 128: // System Call (int 0x80)
+            handle_syscall(frame);
+            break;
+        default:
+            // Handle other interrupts (keyboard, mouse, disc)
+            // driver_dispatch_interrupt(int_no, frame);
+            break;
     }
     
-    kprintf("Interrupt system initialized\n");
-}
-
-void register_interrupt_handler(uint8_t n, interrupt_handler_t handler) {
-    handlers[n] = handler;
-}
-
-void handle_interrupt(uint8_t n, interrupt_frame_t* frame) {
-    if(handlers[n]) {
-        handlers[n](frame);
-    } else {
-        kprintf("Unhandled interrupt: %d\n", n);
+    // Acknowledgement for PIC/APIC
+    if (int_no >= 32 && int_no <= 47) {
+        if (int_no >= 40) outb(0xA0, 0x20); // Slave
+        outb(0x20, 0x20); // Master
     }
 }

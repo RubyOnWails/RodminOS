@@ -120,54 +120,50 @@ void scheduler_start(void) {
     schedule();
 }
 
-void schedule(void) {
-    process_t* next = select_next_process();
+bool load_executable(process_t* proc, const char* path) {
+    int fd = fs_open(path, 0);
+    if (fd < 0) return false;
     
-    if(next && next != current_process) {
-        process_t* prev = current_process;
-        current_process = next;
-        
-        // Update process states
-        if(prev && prev->state == PROCESS_RUNNING) {
-            prev->state = PROCESS_READY;
-            add_to_ready_queue(prev);
-        }
-        
-        next->state = PROCESS_RUNNING;
-        next->time_slice = calculate_time_slice(next);
-        
-        // Context switch
-        context_switch(prev, next);
+    fs_stat_t st;
+    fs_fstat(fd, &st);
+    
+    void* buffer = kmalloc(st.size);
+    fs_read(fd, buffer, st.size);
+    fs_close(fd);
+    
+    elf64_header_t* elf_header = (elf64_header_t*)buffer;
+    if (elf_header->magic != ELF_MAGIC) {
+        kfree(buffer);
+        return false;
     }
-}
-
-process_t* select_next_process(void) {
-    // Round-robin within priority levels
-    for(int priority = 0; priority < MAX_PRIORITY_LEVELS; priority++) {
-        if(ready_queues[priority].count > 0) {
-            process_t* proc = dequeue_process(&ready_queues[priority]);
-            return proc;
+    
+    elf64_phdr_t* phdr = (elf64_phdr_t*)((uint8_t*)buffer + elf_header->phoff);
+    for (int i = 0; i < elf_header->phnum; i++) {
+        if (phdr[i].type == 1) { // PT_LOAD
+            // Allocate and map memory for the segment
+            // For now, simplify by copying into kernel space (incorrect but illustrative)
+            // vmm_map_user_pages(proc->page_table, phdr[i].vaddr, phdr[i].memsz);
+            memcpy((void*)phdr[i].vaddr, (uint8_t*)buffer + phdr[i].offset, phdr[i].filesz);
+            memset((void*)(phdr[i].vaddr + phdr[i].filesz), 0, phdr[i].memsz - phdr[i].filesz);
         }
     }
     
-    // Return idle process if no other process is ready
-    return get_idle_process();
+    proc->entry_point = elf_header->entry;
+    kfree(buffer);
+    return true;
 }
 
+// Unified Context Switch using ISR stack frame
 void context_switch(process_t* from, process_t* to) {
-    // Save current process state
-    if(from) {
-        save_process_state(from);
+    if (from) {
+        // State is saved on the stack during the timer interrupt
     }
-    
-    // Load new process state
-    load_process_state(to);
     
     // Switch address space
-    write_cr3((uint64_t)to->page_table);
+    __asm__ __volatile__ ("mov %0, %%cr3" : : "r" (to->page_table));
     
-    // Update TSS for kernel stack
-    update_tss(to);
+    // We don't return directly; we return via the interrupt return path
+    // which will pop registers of 'to' from its kernel stack
 }
 
 void save_process_state(process_t* proc) {

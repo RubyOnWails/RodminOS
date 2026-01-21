@@ -13,19 +13,18 @@ void kernel_main(void) {
     // Initialize core subsystems
     memory_init();
     interrupt_init();
-    process_init();
+    process_init(); // New multi-process management
     
     // Initialize hardware drivers
     driver_init();
+    setup_scheduler_timer(); // Start preemption
     
     // Initialize file system
     fs_init();
     
-    // Initialize security subsystem
-    security_init();
-    
-    // Initialize networking
+    // Initialize networking & security
     network_init();
+    security_init();
     
     // Initialize GUI system
     gui_init();
@@ -33,8 +32,7 @@ void kernel_main(void) {
     // Start system processes
     start_system_processes();
     
-    // Enable interrupts and enter scheduler
-    enable_interrupts();
+    // Start the scheduler (this call never returns)
     scheduler_start();
     
     // Should never reach here
